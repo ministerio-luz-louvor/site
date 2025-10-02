@@ -13,12 +13,19 @@ export default function AuthHeader() {
 
     getSession();
 
-    const { subscription } = supabase.auth.onAuthStateChange((_event, sess) => {
+    const listener: any = supabase.auth.onAuthStateChange((_event: any, sess: any) => {
       setSession(sess ?? null);
     });
 
+    // listener may be { data: { subscription } } or a subscription-like object
+    const subscription = listener?.subscription ?? listener?.data?.subscription ?? listener;
+
     return () => {
-      subscription.unsubscribe();
+      try {
+        subscription?.unsubscribe?.();
+      } catch (e) {
+        // ignore
+      }
     };
   }, []);
 
