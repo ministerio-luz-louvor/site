@@ -30,7 +30,9 @@ export default function AuthHeader() {
     <header className="w-full flex justify-end p-4">
       {session ? (
         <div className="flex items-center gap-3">
-          <span className="font-mono text-sm">{session.user.email}</span>
+          <a href="/dashboard" className="font-mono text-sm underline">
+            {session.user.email}
+          </a>
           <button
             onClick={handleLogout}
             className="px-3 py-1 rounded bg-gray-800 text-white text-sm"
