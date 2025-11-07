@@ -7,12 +7,7 @@
   --brand-gold: #d6b053; /* warm gold from logo */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+
 
 body {
   background: var(--background);

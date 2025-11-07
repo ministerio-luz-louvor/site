@@ -1,6 +1,8 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import supabase from "@/lib/supabaseClient";
+import supabase from "../lib/supabaseClient";
+import Link from "next/link";
 
 export default function AuthHeader() {
   const [session, setSession] = useState<any>(null);
@@ -17,7 +19,6 @@ export default function AuthHeader() {
       setSession(sess ?? null);
     });
 
-    // listener may be { data: { subscription } } or a subscription-like object
     const subscription = listener?.subscription ?? listener?.data?.subscription ?? listener;
 
     return () => {
@@ -34,24 +35,19 @@ export default function AuthHeader() {
   };
 
   return (
-    <header className="w-full flex justify-end p-4">
+    <div style={{ width: '100%', padding: 16, display: 'flex', justifyContent: 'flex-end' }}>
       {session ? (
-        <div className="flex items-center gap-3">
-          <a href="/dashboard" className="font-mono text-sm underline">
-            {session.user.email}
-          </a>
-          <button
-            onClick={handleLogout}
-            className="px-3 py-1 rounded bg-gray-800 text-white text-sm"
-          >
-            Logout
-          </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <Link href="/dashboard">
+            <span style={{ fontFamily: 'monospace', fontSize: 14, textDecoration: 'underline' }}>{session.user?.email}</span>
+          </Link>
+          <button onClick={handleLogout} style={{ padding: '6px 10px' }}>Logout</button>
         </div>
       ) : (
-        <a href="/login" className="px-3 py-1 rounded bg-gray-100 text-sm">
-          Entrar
-        </a>
+        <Link href="/login">
+          <button style={{ padding: '6px 10px' }}>Entrar</button>
+        </Link>
       )}
-    </header>
+    </div>
   );
 }

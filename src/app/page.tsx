@@ -1,84 +1,46 @@
-import Image from "next/image";
+export default async function Home() {
+  // fetch latest album
+  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/albums?select=id,name,artist,cover_url,spotify_link,youtube_link&order=created_at.desc&limit=1`;
+  let latest = null;
+  try {
+    const res = await fetch(url, { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '' }, cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      latest = Array.isArray(data) && data.length ? data[0] : null;
+    }
+  } catch (e) {
+    // ignore
+  }
 
-export default function Home() {
   return (
-    <main className="min-h-screen font-sans">
-      <section className="relative bg-cover bg-center py-28 section--dark" style={{ backgroundColor: "var(--brand-navy)" }}>
-        <div className="px-8 sm:px-20">
-          <h1 className="text-4xl sm:text-6xl mb-4" style={{ color: "var(--brand-gold)" }}>
-            Ministério Luz & Louvor
-          </h1>
-          <p className="max-w-2xl text-lg sm:text-xl lead">
-            Músicas católicas para louvar e evangelizar — venha conhecer nosso trabalho,
-            nossos lançamentos e como participar.
-          </p>
-          <div className="mt-8 flex gap-4">
-            <a href="#lancamentos" className="px-4 py-2 rounded" style={{ backgroundColor: "var(--brand-gold)", color: "var(--brand-navy)" }}>
-              Lançamentos
-            </a>
-            <a href="#discografia" className="px-4 py-2 border rounded" style={{ borderColor: "rgba(255,255,255,0.3)" }}>
-              Discografia
-            </a>
+    <main style={{ padding: 20 }}>
+      <h1>Ministério Luz & Louvor</h1>
+      <p>Bem-vindo — explore nossos álbuns e faixas.</p>
+
+      <section style={{ marginTop: 28 }}>
+        <h2>Último lançamento</h2>
+        {latest ? (
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <div style={{ width: 160, height: 160, borderRadius: 8, overflow: 'hidden', background: '#f3f3f3' }}>
+              {latest.cover_url ? <img src={latest.cover_url} alt={latest.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>capa</div>}
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 18 }}>{latest.name}</div>
+              <div style={{ color: '#666', marginTop: 6 }}>{latest.artist}</div>
+              <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                <a href={`/albums/${latest.id}`}><button>Ver álbum</button></a>
+                {latest.spotify_link && <a href={latest.spotify_link} target="_blank" rel="noreferrer"><button>Ouvir no Spotify</button></a>}
+                {latest.youtube_link && <a href={latest.youtube_link} target="_blank" rel="noreferrer"><button>Ver no YouTube</button></a>}
+              </div>
+            </div>
           </div>
+        ) : (
+          <p>Nenhum lançamento encontrado.</p>
+        )}
+        <div style={{ marginTop: 12 }}>
+          <a href="/albums"><button>Ver todos os álbuns</button></a>
         </div>
       </section>
-
-  <section id="lancamentos" className="px-8 sm:px-20 py-12 section--dark">
-        <h2 className="text-2xl font-semibold mb-4">Lançamentos</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          <article className="p-6 border rounded">
-            <h3 className="font-semibold">Álbum — Em Breve</h3>
-            <p className="text-sm mt-2">Nosso próximo álbum está em produção. Acompanhe as novidades.</p>
-          </article>
-          <article className="p-6 border rounded">
-            <h3 className="font-semibold">Último Lançamento</h3>
-            <p className="text-sm mt-2">Single: "Louvor e Esperança" — lançado recentemente.</p>
-          </article>
-        </div>
-      </section>
-
-  <section id="discografia" className="bg-gray-50 px-8 sm:px-20 py-12 section--light">
-        <h2 className="text-2xl font-semibold mb-4">Discografia</h2>
-        <div className="grid sm:grid-cols-3 gap-6">
-          <div className="p-4 border rounded">Álbum 1</div>
-          <div className="p-4 border rounded">Álbum 2</div>
-          <div className="p-4 border rounded">Singles</div>
-        </div>
-      </section>
-
-      <section id="devocional" className="px-8 sm:px-20 py-12 section--dark" style={{ backgroundColor: "var(--brand-navy)" }}>
-        <h2 className="text-2xl font-semibold mb-4">Devocional</h2>
-        <p className="max-w-3xl lead">Reflexões diárias e meditações curtas para acompanhar sua jornada espiritual.</p>
-      </section>
-
-      <section id="redes" className="bg-gray-50 px-8 sm:px-20 py-12 section--light">
-        <h2 className="text-2xl font-semibold mb-4">Conheça nossas redes</h2>
-        <div className="flex gap-4">
-          <a className="px-3 py-2 border rounded" href="#">Instagram</a>
-          <a className="px-3 py-2 border rounded" href="#">YouTube</a>
-          <a className="px-3 py-2 border rounded" href="#">Spotify</a>
-        </div>
-      </section>
-
-  <section id="interprete" className="px-8 sm:px-20 py-12 section--dark" style={{ backgroundColor: "var(--brand-navy)" }}>
-        <h2 className="text-2xl font-semibold mb-4">Seja um intérprete</h2>
-        <p className="max-w-3xl">Se você canta ou toca e quer participar do ministério, entre em contato conosco.</p>
-        <a className="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded" href="#contato">Quero participar</a>
-      </section>
-
-  <section id="contato" className="bg-gray-50 px-8 sm:px-20 py-12 section--light">
-        <h2 className="text-2xl font-semibold mb-4">Contato</h2>
-        <form className="max-w-xl grid gap-3">
-          <input className="p-2 border rounded" placeholder="Nome" />
-          <input className="p-2 border rounded" placeholder="Email" />
-          <textarea className="p-2 border rounded" placeholder="Mensagem" rows={4} />
-          <button className="px-4 py-2 rounded" style={{ backgroundColor: "var(--brand-gold)", color: "var(--brand-navy)" }}>Enviar</button>
-        </form>
-      </section>
-
-      <footer className="px-8 sm:px-20 py-8 text-center text-sm text-gray-500" style={{ backgroundColor: "var(--brand-navy)", color: "white" }}>
-        © {new Date().getFullYear()} Ministério Luz & Louvor
-      </footer>
     </main>
   );
 }
