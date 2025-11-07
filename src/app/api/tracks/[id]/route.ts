@@ -1,8 +1,8 @@
 import serverSupabase from '../../../../lib/supabaseServerClient';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id;
+    const { id } = await params;
     const { data, error } = await serverSupabase.from('tracks').select('*').eq('id', id).single();
     if (error) return new Response(JSON.stringify({ error: error.message }), { status: 404 });
     return new Response(JSON.stringify(data), { status: 200 });
@@ -11,9 +11,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id;
+    const { id } = await params;
     const authHeader = request.headers.get('authorization') || '';
     const token = authHeader.replace('Bearer ', '').trim();
     if (!token) return new Response(JSON.stringify({ error: 'Missing auth token' }), { status: 401 });
@@ -73,9 +73,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id;
+    const { id } = await params;
     const authHeader = request.headers.get('authorization') || '';
     const token = authHeader.replace('Bearer ', '').trim();
     if (!token) return new Response(JSON.stringify({ error: 'Missing auth token' }), { status: 401 });
