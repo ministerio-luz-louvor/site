@@ -21,7 +21,7 @@ export default async function Home() {
   }
 
   return (
-    <main style={{ padding: 20 }}>
+    <main className={ 'max-w-6xl m-auto'} style={{ padding: 20 }}>
       <h1>Ministério Luz & Louvor</h1>
       <p>Bem-vindo — explore nossos álbuns e faixas.</p>
 

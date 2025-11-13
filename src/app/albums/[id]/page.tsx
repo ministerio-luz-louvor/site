@@ -49,7 +49,7 @@ export default async function AlbumPage({ params }: { params: { id: string } }) 
   const tracks = await fetchTracks(id);
 
   return (
-    <main className="px-6 py-8">
+    <main className="px-6 py-8 max-w-6xl m-auto">
       <AlbumDetail album={album} tracks={tracks} />
     </main>
   );

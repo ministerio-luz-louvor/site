@@ -54,7 +54,7 @@ export default async function AlbumsPage() {
   const albums: Album[] = await fetchAlbums();
 
   return (
-    <main className="px-6 py-8">
+    <main className="px-6 py-8 max-w-6xl m-auto">
       <h1 className="text-2xl font-bold">Álbuns</h1>
       <p className="text-gray-600 mt-2">Nossa discografia — confira, ouça e baixe as faixas.</p>
 

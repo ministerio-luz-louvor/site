@@ -225,7 +225,7 @@ export default function SettingsAlbumsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl">
       <div>
         <h1 className="text-xl font-semibold">Configurações de Álbuns</h1>
       </div>

@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="min-h-screen flex bg-white max-w-6xl m-auto">
       <aside className="w-56 border-r border-gray-100 bg-gray-50 p-4">
         <h3 className="text-lg font-semibold mb-3">Configurações</h3>
         <nav>
