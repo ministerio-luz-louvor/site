@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import ImageUploader from './ImageUploader';
+import TextField from './ui/TextField';
+import Button from './ui/Button';
 
 type Props = {
   initial?: any;
@@ -56,28 +58,29 @@ export default function TrackEditor({ initial, albumId, onCancel, onSave }: Prop
 
   return (
     <form onSubmit={submit}>
-      <div style={{ display: 'grid', gap: 8 }}>
-        <input placeholder="Nome da faixa" value={name} onChange={(e) => setName(e.target.value)} required style={{ padding: 8 }} />
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input placeholder="Número" type="number" value={number ?? ''} onChange={(e) => setNumber(e.target.value ? Number(e.target.value) : '')} />
-          <input placeholder="Duração mm:ss ou segundos" value={duration} onChange={(e) => setDuration(e.target.value)} />
-          <input placeholder="Ano" type="number" value={year ?? ''} onChange={(e) => setYear(e.target.value ? Number(e.target.value) : '')} />
+      <div className="grid gap-3">
+        <TextField label="Nome da faixa" placeholder="Nome da faixa" value={name} onChange={(e:any) => setName(e.target.value)} required />
+
+        <div className="flex gap-3">
+          <TextField label="Número" type="number" placeholder="Número" value={number ?? ''} onChange={(e:any) => setNumber(e.target.value ? Number(e.target.value) : '')} />
+          <TextField label="Duração" placeholder="mm:ss ou segundos" value={duration} onChange={(e:any) => setDuration(e.target.value)} />
+          <TextField label="Ano" type="number" placeholder="Ano" value={year ?? ''} onChange={(e:any) => setYear(e.target.value ? Number(e.target.value) : '')} />
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: 6 }}>Capa (opcional)</label>
-          {coverUrl && <img src={coverUrl} alt="cover" style={{ width: 140, borderRadius: 6, display: 'block', marginBottom: 8 }} />}
+          <label className="block text-sm font-medium text-gray-700 mb-1">Capa (opcional)</label>
+          {coverUrl && <img src={coverUrl} alt="cover" className="w-36 rounded block mb-2" />}
           <ImageUploader onUpload={(url: string) => setCoverUrl(url)} />
         </div>
 
-        <input placeholder="YouTube link" value={youtubeLink} onChange={(e) => setYoutubeLink(e.target.value)} style={{ padding: 8 }} />
-        <input placeholder="Spotify link" value={spotifyLink} onChange={(e) => setSpotifyLink(e.target.value)} style={{ padding: 8 }} />
-        <input placeholder="Chords link" value={chordsLink} onChange={(e) => setChordsLink(e.target.value)} style={{ padding: 8 }} />
-        <input placeholder="Lyrics link" value={lyricsLink} onChange={(e) => setLyricsLink(e.target.value)} style={{ padding: 8 }} />
+        <TextField label="YouTube link" placeholder="YouTube link" value={youtubeLink} onChange={(e:any) => setYoutubeLink(e.target.value)} />
+        <TextField label="Spotify link" placeholder="Spotify link" value={spotifyLink} onChange={(e:any) => setSpotifyLink(e.target.value)} />
+        <TextField label="Chords link" placeholder="Chords link" value={chordsLink} onChange={(e:any) => setChordsLink(e.target.value)} />
+        <TextField label="Lyrics link" placeholder="Lyrics link" value={lyricsLink} onChange={(e:any) => setLyricsLink(e.target.value)} />
 
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
-          <button type="button" onClick={onCancel} disabled={loading}>Cancelar</button>
-          <button type="submit" disabled={loading}>{loading ? 'Salvando...' : (initial ? 'Salvar' : 'Adicionar')}</button>
+        <div className="flex gap-2 justify-end mt-2">
+          <Button type="button" onClick={onCancel} disabled={loading}>Cancelar</Button>
+          <Button type="submit" disabled={loading}>{loading ? 'Salvando...' : (initial ? 'Salvar' : 'Adicionar')}</Button>
         </div>
       </div>
     </form>

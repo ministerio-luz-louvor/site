@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import supabase from "@/lib/supabaseClient";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,6 +10,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams?.get("redirect") || "/settings";
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +26,8 @@ export default function LoginPage() {
       setError(error.message);
       return;
     }
-    router.push("/");
+    // after login, redirect to requested page or /settings by default
+    router.push(redirectParam);
   };
 
   return (

@@ -52,31 +52,36 @@ export default function SettingsPage() {
   }
 
   return (
-    <div style={{ padding: 16 }}>
-      <h1 style={{ marginBottom: 12 }}>Configurações — Imagem Hero</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold">Configurações — Imagem Hero</h1>
+        <p className="text-sm text-gray-600 mt-1">Envie imagens que aparecem no hero da home.</p>
+      </div>
 
-      <div style={{ marginBottom: 12 }}>
-        <input type="file" accept="image/*" onChange={onChange} />
-        <button onClick={upload} disabled={!file || loading} style={{ marginLeft: 8 }}>
+      <div className="flex items-center gap-3">
+        <input type="file" accept="image/*" onChange={onChange} className="block" />
+        <button onClick={upload} disabled={!file || loading} className="px-4 py-2 bg-brand-navy text-white rounded-md disabled:opacity-60">
           {loading ? 'Enviando...' : 'Enviar'}
         </button>
       </div>
 
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {files.length === 0 && <li style={{ color: '#666' }}>Nenhum arquivo encontrado.</li>}
-        {files.map((f) => (
-          <li key={f.name} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <img src={publicUrl(f.name)} alt={f.name} style={{ width: 160, height: 90, objectFit: 'cover', background: '#eee' }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13 }}>{f.name}</div>
-            </div>
-            <div>
-              <a href={publicUrl(f.name)} target="_blank" rel="noreferrer" style={{ marginRight: 8 }}>Abrir</a>
-              <button onClick={() => remove(f.name)} style={{ color: '#b91c1c' }}>Excluir</button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <div>
+        <ul className="space-y-3">
+          {files.length === 0 && <li className="text-gray-600">Nenhum arquivo encontrado.</li>}
+          {files.map((f) => (
+            <li key={f.name} className="flex items-center gap-4 p-3 bg-white border border-gray-100 rounded">
+              <img src={publicUrl(f.name)} alt={f.name} className="w-40 h-24 object-cover bg-gray-100 rounded" />
+              <div className="flex-1">
+                <div className="text-sm font-medium">{f.name}</div>
+              </div>
+              <div className="flex items-center gap-3">
+                <a href={publicUrl(f.name)} target="_blank" rel="noreferrer" className="text-sm text-brand-navy">Abrir</a>
+                <button onClick={() => remove(f.name)} className="text-sm text-red-600">Excluir</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

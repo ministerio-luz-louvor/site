@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import supabase from '../../../lib/supabaseClient';
 import ImageUploader from '../../../components/ImageUploader';
-import TrackForm from '../../../components/TrackForm';
 import Modal from '../../../components/Modal';
 import TrackEditor from '../../../components/TrackEditor';
+import Button from '@/components/ui/Button';
+import TextField from '@/components/ui/TextField';
 
 type Album = {
   id: string;
@@ -22,6 +23,7 @@ export default function SettingsAlbumsPage() {
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedTracks, setExpandedTracks] = useState<Record<string, any>>({});
+  const [showTracks, setShowTracks] = useState<Record<string, boolean>>({});
   const [trackModalOpen, setTrackModalOpen] = useState(false);
   const [trackEditing, setTrackEditing] = useState<{ albumId: string; track?: any } | null>(null);
   const [form, setForm] = useState<any>({ name: '', artist: '', year: '', cover_url: null });
@@ -40,7 +42,27 @@ export default function SettingsAlbumsPage() {
       }
       const { data, error } = await supabase.from('albums').select('id,name,artist,year,cover_url,tracks_count').eq('created_by', userId).order('created_at', { ascending: false });
       if (error) console.error(error);
-      setAlbums(data || []);
+      const albumsData = data || [];
+      setAlbums(albumsData);
+
+      // fetch tracks for each album so we can show them by default
+      try {
+        const results = await Promise.all(albumsData.map(async (alb: any) => {
+          try {
+            const res = await fetch(`/api/albums/${alb.id}`);
+            if (!res.ok) return null;
+            const d = await res.json();
+            return { id: alb.id, data: d };
+          } catch (e) {
+            return null;
+          }
+        }));
+        const map: Record<string, any> = {};
+        results.forEach((r) => { if (r) map[r.id] = r.data; });
+        setExpandedTracks(map);
+      } catch (e) {
+        // ignore per-album fetch errors
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -108,22 +130,21 @@ export default function SettingsAlbumsPage() {
     }
   }
 
+  // toggle show/hide tracks for an album. If tracks not prefetched, fetch them.
   async function toggleTracks(albumId: string) {
-    const expanded = { ...expandedTracks };
-    if (expanded[albumId]) {
-      delete expanded[albumId];
-      setExpandedTracks(expanded);
-      return;
-    }
-    // fetch album details with tracks
-    try {
-      const res = await fetch(`/api/albums/${albumId}`);
-      if (!res.ok) throw new Error('Falha ao buscar faixas');
-      const data = await res.json();
-      expanded[albumId] = data;
-      setExpandedTracks(expanded);
-    } catch (err) {
-      alert('Erro ao carregar faixas');
+    const shown = { ...showTracks };
+    shown[albumId] = !shown[albumId];
+    setShowTracks(shown);
+
+    if (!expandedTracks[albumId] && shown[albumId]) {
+      try {
+        const res = await fetch(`/api/albums/${albumId}`);
+        if (!res.ok) throw new Error('Falha ao buscar faixas');
+        const data = await res.json();
+        setExpandedTracks((prev) => ({ ...prev, [albumId]: data }));
+      } catch (err) {
+        alert('Erro ao carregar faixas');
+      }
     }
   }
 
@@ -204,120 +225,140 @@ export default function SettingsAlbumsPage() {
   }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Configurações de Álbuns</h1>
-      <div style={{ margin: '12px 0' }}>
-        <button onClick={() => setCreating((c) => !c)}>{creating ? 'Fechar' : 'Criar novo álbum'}</button>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold">Configurações de Álbuns</h1>
+      </div>
+      <div>
+        <Button onClick={() => setCreating((c) => !c)}>{creating ? 'Fechar' : 'Criar novo álbum'}</Button>
       </div>
 
       {creating && (
-        <form onSubmit={handleCreate} style={{ marginBottom: 16, maxWidth: 700 }}>
-          <div style={{ marginBottom: 8 }}>
-            <input placeholder="Nome" value={form.name || ''} onChange={(e) => setForm((s:any)=>({...s,name:e.target.value}))} required style={{ width: '100%', padding: 8 }} />
+        <form onSubmit={handleCreate} className="space-y-4 max-w-3xl">
+          <div>
+            <TextField label="Nome" value={form.name || ''} onChange={(e:any)=> setForm((s:any)=>({...s,name:e.target.value}))} />
           </div>
-          <div style={{ marginBottom: 8 }}>
-            <input placeholder="Artista" value={form.artist || ''} onChange={(e) => setForm((s:any)=>({...s,artist:e.target.value}))} style={{ width: '100%', padding: 8 }} />
+          <div>
+            <TextField label="Artista" value={form.artist || ''} onChange={(e:any)=> setForm((s:any)=>({...s,artist:e.target.value}))} />
           </div>
-          <div style={{ marginBottom: 8 }}>
-            <input placeholder="Ano" type="number" value={form.year ?? ''} onChange={(e) => setForm((s:any)=>({...s,year: e.target.value ? Number(e.target.value) : ''}))} />
+          <div>
+            <TextField label="Ano" type="number" value={form.year ?? ''} onChange={(e:any)=> setForm((s:any)=>({...s,year: e.target.value ? Number(e.target.value) : ''}))} />
           </div>
-          <div style={{ marginBottom: 8 }}>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Capa</label>
             <ImageUploader onUpload={(url: string) => setForm((s:any)=>({...s,cover_url: url}))} />
           </div>
           <div>
-            <button type="submit">Criar</button>
+            <Button type="submit">Criar</Button>
           </div>
         </form>
       )}
 
-      {loading && <p>Carregando álbuns...</p>}
+      {loading && <p className="text-gray-600">Carregando álbuns...</p>}
 
-      {!loading && albums.length === 0 && <p>Você não tem álbuns ainda.</p>}
+      {!loading && albums.length === 0 && <p className="text-gray-600">Você não tem álbuns ainda.</p>}
 
-      <div style={{ display: 'grid', gap: 12 }}>
+      <div className="grid gap-4">
         {albums.map((a) => (
-          <div key={a.id} style={{ padding: 12, border: '1px solid #ddd', borderRadius: 8 }}>
+          <div key={a.id} className="p-4 bg-white border border-gray-100 rounded-lg">
             {!editingId && (
               <>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700 }}>{a.name}</div>
-                    <div style={{ color: '#555' }}>{a.artist} {a.year ? `(${a.year})` : ''}</div>
-                    <div style={{ marginTop: 6 }}>Faixas: {a.tracks_count ?? 0}</div>
+                <div className="flex gap-4 items-center">
+                  <div className="flex-1">
+                    <div className="font-semibold">{a.name}</div>
+                    <div className="text-sm text-gray-600">{a.artist} {a.year ? `(${a.year})` : ''}</div>
+                    <div className="text-sm text-gray-600 mt-1">Faixas: {expandedTracks[a.id]?.tracks ? expandedTracks[a.id].tracks.length : (a.tracks_count ?? 0)}</div>
                   </div>
-                  {a.cover_url && <img src={a.cover_url} alt="capa" style={{ width: 80, borderRadius: 6 }} />}
+                  {a.cover_url && <img src={a.cover_url} alt="capa" className="w-20 h-20 object-cover rounded" />}
                 </div>
 
-                <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <button onClick={() => handleStartEdit(a)}>Editar</button>
-                  <button onClick={() => handleDeleteAlbum(a.id)} style={{ background: 'red', color: 'white' }}>Excluir</button>
-                  <button onClick={() => toggleTracks(a.id)}>{expandedTracks[a.id] ? 'Fechar faixas' : 'Gerenciar faixas'}</button>
-                  <button onClick={() => handleOpenNewTrack(a.id)} style={{ marginLeft: 'auto' }}>Adicionar faixa</button>
+                <div className="mt-3 flex items-center gap-2">
+                  <Button onClick={() => handleStartEdit(a)}>Editar</Button>
+                  <Button variant="danger" onClick={() => handleDeleteAlbum(a.id)}>Excluir</Button>
+                  <div className="ml-auto">
+                    <Button onClick={() => handleOpenNewTrack(a.id)}>Adicionar faixa</Button>
+                  </div>
                 </div>
               </>
             )}
 
             {editingId === a.id && (
-              <form onSubmit={handleSaveEdit} style={{ marginTop: 8 }}>
-                <div style={{ marginBottom: 8 }}>
-                  <input value={form.name || ''} onChange={(e) => setForm((s:any)=>({...s,name: e.target.value}))} required style={{ width: '100%', padding: 8 }} />
+              <form onSubmit={handleSaveEdit} className="mt-3 space-y-3">
+                <div>
+                  <TextField label="Nome" value={form.name || ''} onChange={(e:any)=> setForm((s:any)=>({...s,name: e.target.value}))} required />
                 </div>
-                <div style={{ marginBottom: 8 }}>
-                  <input value={form.artist || ''} onChange={(e) => setForm((s:any)=>({...s,artist: e.target.value}))} style={{ width: '100%', padding: 8 }} />
+                <div>
+                  <TextField label="Artista" value={form.artist || ''} onChange={(e:any)=> setForm((s:any)=>({...s,artist: e.target.value}))} />
                 </div>
-                <div style={{ marginBottom: 8 }}>
-                  <input type="number" value={form.year ?? ''} onChange={(e) => setForm((s:any)=>({...s,year: e.target.value ? Number(e.target.value) : ''}))} />
+                <div>
+                  <TextField label="Ano" type="number" value={form.year ?? ''} onChange={(e:any)=> setForm((s:any)=>({...s,year: e.target.value ? Number(e.target.value) : ''}))} />
                 </div>
-                <div style={{ marginBottom: 8 }}>
-                  <label>Descrição</label>
-                  <textarea value={form.description || ''} onChange={(e) => setForm((s:any)=>({...s,description: e.target.value}))} style={{ width: '100%', padding: 8 }} />
+                <div>
+                  <TextField label="Descrição" textarea value={form.description || ''} onChange={(e:any)=> setForm((s:any)=>({...s,description: e.target.value}))} />
                 </div>
-                <div style={{ marginBottom: 8 }}>
-                  <label>Gênero</label>
-                  <input value={form.genre || ''} onChange={(e) => setForm((s:any)=>({...s,genre: e.target.value}))} style={{ width: '100%', padding: 8 }} />
+                <div>
+                  <TextField label="Gênero" value={form.genre || ''} onChange={(e:any)=> setForm((s:any)=>({...s,genre: e.target.value}))} />
                 </div>
-                <div style={{ marginBottom: 8 }}>
-                  <label>Data de lançamento</label>
-                  <input type="date" value={form.release_date ?? ''} onChange={(e) => setForm((s:any)=>({...s,release_date: e.target.value || null}))} />
+                <div>
+                  <TextField label="Data de lançamento" type="date" value={form.release_date ?? ''} onChange={(e:any)=> setForm((s:any)=>({...s,release_date: e.target.value || null}))} />
                 </div>
-                <div style={{ marginBottom: 8 }}>
-                  <label>YouTube</label>
-                  <input value={form.youtube_link || ''} onChange={(e) => setForm((s:any)=>({...s,youtube_link: e.target.value}))} style={{ width: '100%', padding: 8 }} />
+                <div>
+                  <TextField label="YouTube" value={form.youtube_link || ''} onChange={(e:any)=> setForm((s:any)=>({...s,youtube_link: e.target.value}))} />
                 </div>
-                <div style={{ marginBottom: 8 }}>
-                  <label>Spotify</label>
-                  <input value={form.spotify_link || ''} onChange={(e) => setForm((s:any)=>({...s,spotify_link: e.target.value}))} style={{ width: '100%', padding: 8 }} />
+                <div>
+                  <TextField label="Spotify" value={form.spotify_link || ''} onChange={(e:any)=> setForm((s:any)=>({...s,spotify_link: e.target.value}))} />
                 </div>
-                <div style={{ marginBottom: 8 }}>
-                  {form.cover_url && <div style={{ marginBottom: 8 }}><img src={form.cover_url} alt="capa" style={{ width: 140, borderRadius: 6 }} /></div>}
+                <div>
+                  {form.cover_url && <div className="mb-2"><img src={form.cover_url} alt="capa" className="w-36 rounded" /></div>}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Capa</label>
                   <ImageUploader onUpload={(url: string) => setForm((s:any) => ({ ...s, cover_url: url }))} />
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button type="submit">Salvar</button>
-                  <button type="button" onClick={() => { setEditingId(null); setForm({ name: '', artist: '', year: '', cover_url: null }); }}>Cancelar</button>
+                <div className="flex gap-2">
+                  <Button type="submit">Salvar</Button>
+                  <Button variant="ghost" type="button" onClick={() => { setEditingId(null); setForm({ name: '', artist: '', year: '', cover_url: null }); }}>Cancelar</Button>
                 </div>
               </form>
             )}
 
-            {expandedTracks[a.id] && (
-              <div style={{ marginTop: 12 }}>
-                <h4>Faixas</h4>
-                <ol>
-                  {expandedTracks[a.id].tracks?.map((t: any) => (
-                    <li key={t.id} style={{ marginBottom: 6 }}>
-                      {t.number ? `${t.number} - ` : ''}{t.name} {t.duration_seconds ? `(${t.duration_seconds}s)` : ''}
-                      <div style={{ display: 'inline-block', marginLeft: 8 }}>
-                        <button onClick={() => handleEditTrack(t, a.id)}>Editar</button>
-                        <button onClick={() => handleDeleteTrack(t.id, a.id)} style={{ marginLeft: 6, color: 'red' }}>Excluir</button>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-                          <div>
-                            <TrackForm albumId={a.id} onCreated={async () => { await refreshAlbum(a.id); await loadAlbums(); }} />
-                          </div>
+            <div className="mt-3">
+              <div
+                className="flex items-center justify-between cursor-pointer hover:bg-gray-50 rounded-md px-2 py-1 transition-colors"
+                onClick={() => toggleTracks(a.id)}
+                role="button"
+                aria-expanded={!!showTracks[a.id]}
+              >
+                <div className="text-sm font-medium">Faixas {a.tracks_count ?? (expandedTracks[a.id]?.tracks ? Array.from(new Map((expandedTracks[a.id].tracks).map((tt:any)=>[tt.id, tt])).values()).length : 0)}</div>
+                <div className="text-sm text-gray-600" aria-hidden>
+                  {showTracks[a.id] ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.25 8.29a.75.75 0 01-.02-1.08z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M7.21 5.23a.75.75 0 01.02 1.06L3.99 9.25H16a.75.75 0 010 1.5H3.99l3.24 2.96a.75.75 0 11-1.04 1.08l-4.5-4.11a.75.75 0 010-1.08l4.5-4.11a.75.75 0 011.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
               </div>
-            )}
+
+              {showTracks[a.id] && expandedTracks[a.id] && (
+                <div className="mt-2">
+                  <ol className="mt-2 space-y-2">
+                    {Array.from(new Map((expandedTracks[a.id].tracks || []).map((tt:any)=>[tt.id, tt])).values()).map((t: any) => (
+                      <li key={t.id} className="flex items-center justify-between">
+                        <div className="text-sm">
+                          {t.number ? `${t.number} - ` : ''}{t.name} {t.duration_seconds ? `(${t.duration_seconds}s)` : ''}
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Button onClick={() => handleEditTrack(t, a.id)}>Editar</Button>
+                          <Button variant="danger" onClick={() => handleDeleteTrack(t.id, a.id)}>Excluir</Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
